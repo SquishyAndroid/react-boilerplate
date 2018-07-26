@@ -1,5 +1,8 @@
+const path = require('path');
 const webpack = require('webpack');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const HTMLWebpackPlugin = require('html-webpack-plugin');
+
 const dev = process.env.NODE_ENV !== 'production';
 
 const UglifyJsPluginConfig = new UglifyJsPlugin({
@@ -10,16 +13,25 @@ const UglifyJsPluginConfig = new UglifyJsPlugin({
     }
 });
 
+const HTMLWebpackPluginConfig = new HTMLWebpackPlugin({
+    template: path.join(__dirname, '/src/index.html'),
+    filename: 'index.html',
+    inject: 'body',
+});
+
 const DefinePluginConfig = new webpack.DefinePlugin({
     'process.env.NODE_ENV': JSON.stringify('production')
 });
 
 module.exports = {
-    context: __dirname + "/src",
-    entry: "./index.js",
+    devServer: {
+        host: 'localhost',
+        port: '3000'
+    },
+    entry: path.join(__dirname, '/src/index.js'),
     output: {
         filename: "bundle.js",
-        path: __dirname + "/public/js/dist",
+        path: path.join(__dirname, '/public'),
     },
     module: {
         rules: [
@@ -35,11 +47,18 @@ module.exports = {
                 test: /\.scss$/,
                 exclude: /node_modules/,
                 loader: 'style-loader!css-loader!sass-loader'
+            },
+            {
+                test: /\.(jpe?g|png|gif|svg)$/i,
+                loader: 'url-loader',
+                options: {
+                    limit: 10000,
+                }
             }
         ]
     },
     mode: dev ? 'development' : 'production',
-    plugins: dev ? [] : [ UglifyJsPluginConfig, DefinePluginConfig ],
+    plugins: dev ? [HTMLWebpackPluginConfig] : [ HTMLWebpackPluginConfig, UglifyJsPluginConfig, DefinePluginConfig ],
     node: {
         __dirname: true
     }
